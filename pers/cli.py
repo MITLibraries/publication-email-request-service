@@ -7,6 +7,7 @@ import click
 from pers.config import Config
 from pers.database_engine import DatabaseEngine
 from pers.elements import ElementsClient
+from pers.importer import Importer
 
 logger = logging.getLogger(__name__)
 CONFIG = Config()
@@ -32,3 +33,24 @@ def main(ctx: click.Context, verbose: bool) -> None:
     ctx.obj["db_engine"] = db_engine
     ctx.obj["elements_client"] = elements_client
     logger.info("Running process")
+
+
+@main.command()
+@click.option(
+    "--author-id",
+    required=True,
+    type=str,
+    help="Unique identifier for an author in Symplectic Elements",
+)
+@click.pass_context
+def import_citations(ctx: click.Context, author_id: str):
+    importer = Importer(
+        db_engine=ctx.obj["db_engine"],
+        elements_client=ctx.obj["elements_client"],
+        base_url=CONFIG.ELEMENTS_ENDPOINT,
+    )
+    importer.run(author_id)
+    logger.info(
+        "Total elapsed: %s",
+        str(timedelta(seconds=perf_counter() - ctx.obj["START_TIME"])),
+    )
