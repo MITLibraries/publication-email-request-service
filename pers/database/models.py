@@ -57,12 +57,12 @@ class Publication(Base):
     id: Mapped[str] = mapped_column(primary_key=True)
     title: Mapped[str]
     citation: Mapped[str]
-    email_id: Mapped[int] = mapped_column(ForeignKey("email.id"), nullable=True)
-    email: Mapped["Email"] = relationship(back_populates="publications")
+    email: Mapped["Email"] = relationship(back_populates="publications", init=False)
     authors: Mapped[list["Author"]] = relationship(
         secondary=publications_authors_assoc,
         back_populates="publications",
     )
+    email_id: Mapped[int | None] = mapped_column(ForeignKey("email.id"), init=False)
 
 
 class Email(Base):
@@ -81,11 +81,11 @@ class Email(Base):
 ##########
 class DLC(Base):
     __tablename__ = "dlc"
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(init=False, primary_key=True, autoincrement=True)
     name: Mapped[str]
-    liaison_id: Mapped[int | None] = mapped_column(ForeignKey("liaison.id"))
-    liaison: Mapped[Liaison | None] = relationship(back_populates="dlcs")
-    authors: Mapped[list[Author]] = relationship(back_populates="dlc")
+    liaison_id: Mapped[int | None] = mapped_column(ForeignKey("liaison.id"), init=False)
+    liaison: Mapped[Liaison | None] = relationship(back_populates="dlcs", init=False)
+    authors: Mapped[list[Author]] = relationship(back_populates="dlc", init=False)
 
 
 class Liaison(Base):
@@ -105,10 +105,9 @@ class Author(Base):
     email_address: Mapped[str]
     first_name: Mapped[str]
     last_name: Mapped[str]
-    dlc_id: Mapped[int] = mapped_column(ForeignKey("dlc.id"), nullable=True)
+    dlc_id: Mapped[int] = mapped_column(ForeignKey("dlc.id"), nullable=True, init=False)
     dlc: Mapped["DLC"] = relationship(back_populates="authors")
-    emails: Mapped[list["Email"]] = relationship(back_populates="author")
+    emails: Mapped[list["Email"]] = relationship(back_populates="author", init=False)
     publications: Mapped[list["Publication"]] = relationship(
-        secondary=publications_authors_assoc,
-        back_populates="authors",
+        secondary=publications_authors_assoc, back_populates="authors", init=False
     )

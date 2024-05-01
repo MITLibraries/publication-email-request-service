@@ -1,8 +1,15 @@
+import logging
+import sys
+
+sys.path.append("/Users/jcuerdo/Documents/repos/publication-email-request-service")
+
 from typing import Any
 
 from attrs import define, field
 from sqlalchemy import Engine, MetaData, create_engine, or_
 from sqlalchemy.orm import Session
+
+logger = logging.getLogger(__name__)
 
 
 @define
@@ -41,6 +48,7 @@ class DatabaseEngine:
 
     def get_or_create(self, record, *args):
         model = record.__class__
+        logger.info(f"Model: {model}")
         with Session(self.engine) as session:
             instance = session.query(model).filter(or_(*args)).first()
             if instance:
@@ -49,3 +57,15 @@ class DatabaseEngine:
                 session.add(record)
                 session.commit()
                 return record
+
+
+if __name__ == "__main__":
+    from sqlalchemy import select
+    from pers.database.models import Author, Email, Publication, DLC
+
+    CONNECTION_STRING = "sqlite:///foo.db"
+    engine = DatabaseEngine.configure(CONNECTION_STRING)
+
+    with Session(engine()) as session:
+        result = session.execute(select(DLC))
+        print(result.all()[0][0].authors.publications)
