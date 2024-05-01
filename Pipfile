@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 click = "*"
 sentry-sdk = "*"
+sqlalchemy = "*"
 
 [dev-packages]
 black = "*"
