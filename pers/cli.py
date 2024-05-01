@@ -5,6 +5,7 @@ from time import perf_counter
 import click
 
 from pers.config import Config
+from pers.database.models import Base
 from pers.database_engine import DatabaseEngine
 from pers.elements import ElementsClient
 from pers.importer import Importer
@@ -33,6 +34,17 @@ def main(ctx: click.Context, verbose: bool) -> None:
     ctx.obj["db_engine"] = db_engine
     ctx.obj["elements_client"] = elements_client
     logger.info("Running process")
+
+
+@main.command()
+@click.pass_context
+def init_db(ctx: click.Context):
+    logger.info("Initializing database")
+    ctx.obj["db_engine"].init_db(metadata=Base.metadata)
+    logger.info(
+        "Total elapsed: %s",
+        str(timedelta(seconds=perf_counter() - ctx.obj["START_TIME"])),
+    )
 
 
 @main.command()

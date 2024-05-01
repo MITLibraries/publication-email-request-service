@@ -21,4 +21,4 @@ ruff = "*"
 python_version = "3.11"
 
 [scripts]
-my_app = "python -c \"from my_app.cli import main; main()\""
+pers = "python -c \"from pers.cli import main; main()\""
