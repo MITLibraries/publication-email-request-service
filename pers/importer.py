@@ -25,57 +25,44 @@ class Importer:
         )
         author_record = AuthorRecord.create(author_data)
 
-        # add record to 'DLC'
-        dlc = self.db_engine.get_or_create(
-            DLC(name=author_record.dlc), DLC.name == author_record.dlc
-        )
+        self.db_engine.create(author_record)
 
-        # add record to 'Author' db
-        author = Author(
-            id=author_record.id,
-            email_address=author_record.email_address,
-            first_name=author_record.first_name,
-            last_name=author_record.last_name,
-            dlc=dlc,
-        )
-        self.db_engine.create(author)
+        # for _publication in author_record.get_publications_from_elements(
+        #     self.elements_client, author_id, self.base_url
+        # ):
+        #     publication_id = _publication["id"]
+        #     publication_data = PublicationRecord.get_publication_from_elements(
+        #         self.elements_client, publication_id, self.base_url
+        #     )
+        #     publication_data.update(
+        #         {
+        #             "author_first_name": author_record.first_name,
+        #             "author_last_name": author_record.last_name,
+        #         }
+        #     )
+        #     publication_record = PublicationRecord.create(publication_data)
 
-        for _publication in author_record.get_publications_from_elements(
-            self.elements_client, author_id, self.base_url
-        ):
-            publication_id = _publication["id"]
-            publication_data = PublicationRecord.get_publication_from_elements(
-                self.elements_client, publication_id, self.base_url
-            )
-            publication_data.update(
-                {
-                    "author_first_name": author_record.first_name,
-                    "author_last_name": author_record.last_name,
-                }
-            )
-            publication_record = PublicationRecord.create(publication_data)
+        #     # run checks on publication
+        #     # if self.check_if_email_request_sent(publication_id):
+        #     #     message = (
+        #     #         f"Publication {publication_id} already requested, skipping import"
+        #     #     )
+        #     #     logger.info(message)
+        #     #     continue
+        #     # if not publication_record.check_acquisition_method():
+        #     #     message = f"Publication {publication_id} acquisition method ('{publication_record.c_method_of_acquisition}') is not valid, skipping import"
+        #     #     logger.warning(message)
+        #     #     continue
 
-            # run checks on publication
-            # if self.check_if_email_request_sent(publication_id):
-            #     message = (
-            #         f"Publication {publication_id} already requested, skipping import"
-            #     )
-            #     logger.info(message)
-            #     continue
-            # if not publication_record.check_acquisition_method():
-            #     message = f"Publication {publication_id} acquisition method ('{publication_record.c_method_of_acquisition}') is not valid, skipping import"
-            #     logger.warning(message)
-            #     continue
-
-            # add record to 'Publication' db
-            publication = Publication(
-                id=publication_record.id,
-                title=publication_record.title,
-                citation=publication_record.citation,
-                authors=[author],
-            )
-            self.db_engine.create(publication)
-            logger.info(f"Finished importing publication: {publication_id}")
+        #     # add record to 'Publication' db
+        #     publication = Publication(
+        #         id=publication_record.id,
+        #         title=publication_record.title,
+        #         citation=publication_record.citation,
+        #         authors=[author],
+        #     )
+        #     self.db_engine.create(publication)
+        #     logger.info(f"Finished importing publication: {publication_id}")
 
     def check_if_email_request_sent(self, publication_id):
         with Session(self.db_engine()) as session:

@@ -6,8 +6,12 @@ sys.path.append("/Users/jcuerdo/Documents/repos/publication-email-request-servic
 from typing import Any
 
 from attrs import define, field
-from sqlalchemy import Engine, MetaData, create_engine, or_
+from sqlalchemy import Engine, MetaData, create_engine, or_, select
+from sqlalchemy.dialects.sqlite import insert as sqlite_upsert
 from sqlalchemy.orm import Session
+
+from pers.database.models import Author, DLC
+from pers.record import AuthorRecord
 
 logger = logging.getLogger(__name__)
 
@@ -42,21 +46,34 @@ class DatabaseEngine:
         metadata.create_all(self.engine)
 
     def create(self, record):
-        with Session(self.engine) as session:
-            session.add(record)
-            session.commit()
+        if isinstance(record, AuthorRecord):
+            self._upsert_author(record)
 
-    def get_or_create(self, record, *args):
-        model = record.__class__
-        logger.info(f"Model: {model}")
+    def _upsert_author(self, record):
+        dlc = DLC(name=record.dlc)
+        author = Author(
+            id=record.id,
+            email_address=record.email_address,
+            first_name=record.first_name,
+            last_name=record.last_name,
+        )
+
         with Session(self.engine) as session:
-            instance = session.query(model).filter(or_(*args)).first()
-            if instance:
-                return instance
-            else:
-                session.add(record)
-                session.commit()
-                return record
+            dlc_upsert_stmt = sqlite_upsert(DLC).values([dlc.to_dict()])
+            logger.info(f"DLC upsert")
+            session.execute(
+                dlc_upsert_stmt.on_conflict_do_nothing(index_elements=[DLC.name])
+            )
+            logger.info(f"Author upsert")
+            author_upsert_statement = sqlite_upsert(Author).values([author.to_dict()])
+            session.execute(
+                author_upsert_statement.on_conflict_do_update(
+                    index_elements=[Author.id], set_=author.to_dict()
+                )
+            )
+            # THIS DOESN'T WORK
+            dlc.authors.append(author)
+            session.commit()
 
 
 if __name__ == "__main__":
@@ -68,4 +85,5 @@ if __name__ == "__main__":
 
     with Session(engine()) as session:
         result = session.execute(select(DLC))
-        print(result.all()[0][0].authors.publications)
+        print(session.execute(select(DLC)).all())
+        print(session.execute(select(Author)).all())

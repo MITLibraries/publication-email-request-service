@@ -82,10 +82,12 @@ class Email(Base):
 class DLC(Base):
     __tablename__ = "dlc"
     id: Mapped[int] = mapped_column(init=False, primary_key=True, autoincrement=True)
-    name: Mapped[str]
+    name: Mapped[str] = mapped_column(unique=True)
     liaison_id: Mapped[int | None] = mapped_column(ForeignKey("liaison.id"), init=False)
     liaison: Mapped[Liaison | None] = relationship(back_populates="dlcs", init=False)
-    authors: Mapped[list[Author]] = relationship(back_populates="dlc", init=False)
+    authors: Mapped[list[Author]] = relationship(
+        back_populates="dlc", cascade="all", init=False
+    )
 
 
 class Liaison(Base):
@@ -106,7 +108,7 @@ class Author(Base):
     first_name: Mapped[str]
     last_name: Mapped[str]
     dlc_id: Mapped[int] = mapped_column(ForeignKey("dlc.id"), nullable=True, init=False)
-    dlc: Mapped["DLC"] = relationship(back_populates="authors")
+    dlc: Mapped["DLC"] = relationship(back_populates="authors", init=False)
     emails: Mapped[list["Email"]] = relationship(back_populates="author", init=False)
     publications: Mapped[list["Publication"]] = relationship(
         secondary=publications_authors_assoc, back_populates="authors", init=False
