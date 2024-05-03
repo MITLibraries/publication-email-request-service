@@ -85,9 +85,7 @@ class DLC(Base):
     name: Mapped[str] = mapped_column(unique=True)
     liaison_id: Mapped[int | None] = mapped_column(ForeignKey("liaison.id"), init=False)
     liaison: Mapped[Liaison | None] = relationship(back_populates="dlcs", init=False)
-    authors: Mapped[list[Author]] = relationship(
-        back_populates="dlc", cascade="all", init=False
-    )
+    authors: Mapped[list[Author]] = relationship(back_populates="dlc", init=False)
 
 
 class Liaison(Base):

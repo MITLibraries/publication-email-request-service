@@ -47,9 +47,11 @@ class DatabaseEngine:
 
     def create(self, record):
         if isinstance(record, AuthorRecord):
-            self._upsert_author(record)
+            self._upsert_author_and_dlc(record)
+            self._add_author_to_dlc(record)
 
-    def _upsert_author(self, record):
+    def _upsert_author_and_dlc(self, record):
+        """Upserts record for an author and their associated DLC"""
         dlc = DLC(name=record.dlc)
         author = Author(
             id=record.id,
@@ -60,18 +62,21 @@ class DatabaseEngine:
 
         with Session(self.engine) as session:
             dlc_upsert_stmt = sqlite_upsert(DLC).values([dlc.to_dict()])
-            logger.info(f"DLC upsert")
             session.execute(
                 dlc_upsert_stmt.on_conflict_do_nothing(index_elements=[DLC.name])
             )
-            logger.info(f"Author upsert")
             author_upsert_statement = sqlite_upsert(Author).values([author.to_dict()])
             session.execute(
                 author_upsert_statement.on_conflict_do_update(
                     index_elements=[Author.id], set_=author.to_dict()
                 )
             )
-            # THIS DOESN'T WORK
+            session.commit()
+
+    def _add_author_to_dlc(self, record):
+        with Session(self.engine) as session:
+            dlc = session.scalars(select(DLC).where(DLC.name == record.dlc)).first()
+            author = session.scalars(select(Author).where(Author.id == record.id)).first()
             dlc.authors.append(author)
             session.commit()
 
