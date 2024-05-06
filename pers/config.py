@@ -14,7 +14,6 @@ class Config:
         "QUOTAGUARD_STATIC_URL",
         # "PERS_DATABASE_CONNECTION_STRING",
     ]
-
     OPTIONAL_ENV_VARS: Iterable[str] = ["LOG_LEVEL"]
 
     def __getattr__(self, name: str) -> Any:  # noqa: ANN401
